@@ -1,12 +1,45 @@
-import { useCallback, useState } from "react";
+import { RawNodeDatum, TreeNodeDatum } from "react-d3-tree";
 
-export const useCenteredTree = () => {
-  const [translate, setTranslate] = useState({ x: 0, y: 0 });
-  const containerRef = useCallback((containerElem) => {
-    if (containerElem !== null) {
-      const { width, height } = containerElem.getBoundingClientRect();
-      setTranslate({ x: width / 2, y: height / 2 });
+export const updateNameDFS = (
+  node: RawNodeDatum,
+  currentName: string | null,
+  newName: string
+) => {
+  if (node.name === currentName) {
+    node.name = newName;
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      updateNameDFS(child, currentName, newName);
     }
-  }, []);
-  return [translate, containerRef];
+  }
+};
+
+export const insertNodeDFS = (
+  root: RawNodeDatum,
+  newNode: {
+    name: string;
+    children?: RawNodeDatum[];
+    attributes?: { title: string; department: string; location: string };
+  },
+  parentName: string
+) => {
+  if (root.name === parentName) {
+    if (!root.children) {
+      root.children = [];
+    }
+    root.children.push(newNode);
+    return;
+  }
+  if (root.children) {
+    for (const child of root.children) {
+      insertNodeDFS(child, newNode, parentName);
+    }
+  }
+};
+
+export const deleteNodeDFS = (root: TreeNodeDatum, nodeName: string) => {
+  if (!root.children) return;
+  root.children = root.children.filter((child) => child.name !== nodeName);
+  root.children.forEach((child) => deleteNodeDFS(child, nodeName));
 };
